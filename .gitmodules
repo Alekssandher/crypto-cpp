@@ -1,3 +1,6 @@
 [submodule "external/CLI11"]
 	path = external/CLI11
 	url = https://github.com/CLIUtils/CLI11
+[submodule "extern/cryptopp"]
+	path = extern/cryptopp
+	url = https://github.com/weidai11/cryptopp.git
