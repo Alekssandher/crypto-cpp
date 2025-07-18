@@ -11,5 +11,10 @@ add_executable(crypto-cpp src/main.cpp src/app_config.cpp)
 add_subdirectory(external/CLI11)
 target_link_libraries(crypto-cpp PRIVATE CLI11::CLI11)
 
-add_subdirectory(external/cryptopp)
-target_link_libraries(crypto-cpp PRIVATE cryptopp-static)
+add_subdirectory(external/cryptopp-cmake)
+set(CRYPTOPP_SOURCES "${CMAKE_SOURCE_DIR}/external/cryptopp")
+
+set_property(DIRECTORY external/cryptopp-cmake PROPERTY
+    CRYPTOPP_SOURCES ${CRYPTOPP_SOURCES})
+
+target_link_libraries(crypto-cpp cryptopp-static)

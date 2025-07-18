@@ -1,5 +1,9 @@
-cd ./build
-cmake ..
-make
+#!/bin/bash
 
-./crypto-cpp
+mkdir -p build
+cd build
+
+cmake -DCMAKE_BUILD_TYPE=Release ..
+
+make -j$(nproc)
+
