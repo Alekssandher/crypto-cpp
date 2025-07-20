@@ -1,3 +1,6 @@
 [submodule "external/CLI11"]
 	path = external/CLI11
 	url = https://github.com/CLIUtils/CLI11
+[submodule "external/cryptopp-cmake"]
+	path = external/cryptopp-cmake
+	url = https://github.com/abdes/cryptopp-cmake.git
