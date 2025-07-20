@@ -4,7 +4,7 @@ void AppConfig::configure(CLI::App &app)
 {
     app.add_option("-i, --input", input, "Path where the input file is placed.")->required()->check(CLI::ExistingFile)->ignore_case();
 
-    app.add_option("-o, --output", output, "Path to save the result of the operation.")->required()->check(CLI::ExistingPath)->ignore_case();
+    app.add_option("-o, --output", output, "Path to save the result of the operation.")->required()->ignore_case();
 
     app.add_option("--op, --operation", operation, "Kind of operation (encrypt or decrypt))")->required();
 

@@ -1,4 +1,4 @@
 #pragma once
 #include <iostream>
 
-void encrypt();
+int encrypt(std::string password, std::string input);
