@@ -30,6 +30,12 @@ void AppConfig::configure(CLI::App &app)
 
     app.add_option("-v, --verbose", verbose, "Show more information on the terminal")->default_val(false);
 
-    app.add_option("--oof, --overwriteOriginalFile", overwrite, "Overwrite the original file to safely erase the original data from device.")->default_val(false);
-    
+    app.add_flag("--dof, --deleteOriginalFile", deleteOriginalFile,
+        "Overwrite the original file to safely erase the original data from device.")->default_val(false);
+        
+    app.add_option("--dof-times", deleteOverwriteTimes,
+        "Number of times to overwrite the original file if deletion is enabled.")
+        ->default_val(3)
+        ->check(CLI::Range(1, 100))
+        ->needs("--dof"); 
 }

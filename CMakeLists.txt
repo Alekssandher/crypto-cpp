@@ -12,6 +12,7 @@ add_executable(
     src/app_config.cpp 
     src/utils/encrypt.cpp 
     src/utils/decrypt.cpp
+    src/utils/deleteOriginalFile.cpp
     src/utils/getInputBytes.cpp 
     src/utils/saveFile.cpp 
     src/handlers/handle_args.cpp

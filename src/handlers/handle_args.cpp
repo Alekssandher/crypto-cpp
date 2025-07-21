@@ -1,6 +1,7 @@
 #include "handle_args.hpp"
 #include "encrypt.hpp"
 #include "decrypt.hpp"
+#include "delete_original_file.hpp"
 
 #include <iostream>
 
@@ -33,6 +34,11 @@ void handle_args(AppConfig config)
         break;
     default:
         break;
+    }
+
+    if(config.deleteOriginalFile)
+    {
+        deleteOriginalFile(config.input, config.deleteOverwriteTimes);
     }
 }
 std::string ask_password_twice()
@@ -75,7 +81,7 @@ std::string ask_password(const std::string& prompt)
 
         tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     #endif
-
+    clear_terminal();
     return password;
 }
 

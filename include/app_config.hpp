@@ -14,7 +14,7 @@ struct AppConfig {
 
     unsigned int iterations;
     bool verbose;
-    bool overwrite;
-    
+    bool deleteOriginalFile;
+    int deleteOverwriteTimes;
     void configure(CLI::App &app);
 };
