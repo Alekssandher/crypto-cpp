@@ -2,6 +2,7 @@
 #include <CLI/CLI.hpp>
 #include "app_config.hpp"
 #include "encrypt.hpp"
+#include "handle_args.hpp"
 
 int main(int argc, char** argv)
 {
@@ -14,8 +15,8 @@ int main(int argc, char** argv)
 
     try {
         app.parse(argc, argv);
-        const std::string str = "1234";
-        return encrypt(str, config);
+        handle_args(config);
+        return 0;
         
     } catch (const CLI::ParseError &e) {
         return app.exit(e);

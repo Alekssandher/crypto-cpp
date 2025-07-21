@@ -1,5 +1,6 @@
 #include "encrypt.hpp"
 #include "get_input_bytes.hpp"
+#include "save_file.hpp"
 
 #include <bits/stdc++.h>
 #include <vector>
@@ -26,11 +27,13 @@ int encrypt(const string& password, AppConfig config)
 {
     vector<std::byte> bytes = getInputBytes(config.input);
 
-    enc(
+    saveFile( enc(
         password,
         bytes,
         config
-    );
+    ), config.output);
+
+    
     return 0;
 }
 

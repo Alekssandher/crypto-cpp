@@ -6,7 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(include)
-add_executable(crypto-cpp src/main.cpp src/app_config.cpp src/utils/encrypt.cpp src/utils/getInputBytes.cpp)
+add_executable(
+    crypto-cpp 
+    src/main.cpp 
+    src/app_config.cpp 
+    src/utils/encrypt.cpp 
+    src/utils/getInputBytes.cpp 
+    src/utils/saveFile.cpp 
+    src/handlers/handle_args.cpp
+)
 
 add_subdirectory(external/CLI11)
 target_link_libraries(crypto-cpp PRIVATE CLI11::CLI11)

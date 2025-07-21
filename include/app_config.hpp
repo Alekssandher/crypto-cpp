@@ -2,10 +2,15 @@
 #include <CLI/CLI.hpp>
 #include <iostream>
 
+enum class Operation {
+    Encrypt,
+    Decrypt
+};
+
 struct AppConfig {
     std::string input;
     std::string output;
-    std::string operation;
+    Operation operation;
 
     unsigned int iterations;
     bool verbose;
