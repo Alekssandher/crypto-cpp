@@ -1,9 +1,15 @@
 #include "handle_args.hpp"
 #include "encrypt.hpp"
+#include "decrypt.hpp"
 
 #include <iostream>
-#include <termios.h>
-#include <unistd.h>
+
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <termios.h>
+    #include <unistd.h>
+#endif
 
 std::string ask_password(const std::string& prompt = "Type a password: ");
 std::string ask_password_twice();
@@ -20,6 +26,10 @@ void handle_args(AppConfig config)
         );
         break;
     case Operation::Decrypt:
+        decrypt(
+            ask_password(),
+            config
+        );
         break;
     default:
         break;
@@ -42,19 +52,29 @@ std::string ask_password(const std::string& prompt)
 {
     std::string password;
     std::cout << prompt;
-    termios oldt, newt;
 
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
+    #ifdef _WIN32
+        // Hide input on windows
+        HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+        DWORD mode;
+        GetConsoleMode(hStdin, &mode);
+        SetConsoleMode(hStdin, mode & ~ENABLE_ECHO_INPUT);
 
-    newt.c_lflag &= ~ECHO;
+        std::getline(std::cin, password);
 
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+        SetConsoleMode(hStdin, mode);
+    #else
+        // Hide input on linux
+        termios oldt, newt;
+        tcgetattr(STDIN_FILENO, &oldt);
+        newt = oldt;
+        newt.c_lflag &= ~ECHO;
+        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 
-    std::getline(std::cin, password);
+        std::getline(std::cin, password);
 
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    std::cout << std::endl;
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    #endif
 
     return password;
 }

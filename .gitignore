@@ -1,8 +1,12 @@
 # Prerequisites
 *.d
 
+# Code configs
+.vscode/
+
 # Build
 /build
+/build-windows
 
 # Compiled Object files
 *.slo
