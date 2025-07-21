@@ -54,7 +54,7 @@ string enc(const string& password, vector<std::byte> &data, AppConfig config)
         reinterpret_cast<const byte*>(password.data()), password.size(),
         salt, sizeof(salt), 
         config.iterations 
-        );
+    );
     
     GCM<AES>::Encryption enc;
     enc.SetKeyWithIV(key, key.size(), iv, sizeof(iv));
@@ -65,9 +65,10 @@ string enc(const string& password, vector<std::byte> &data, AppConfig config)
     
     // Appending for future dec
     string output;
+    output.reserve(sizeof(salt) + sizeof(iv) + cipher.size());
     output.append(reinterpret_cast<char*>(salt), sizeof(salt));
     output.append(reinterpret_cast<char*>(iv), sizeof(iv));
     output.append(cipher);
 
-    return cipher;
+    return output;
 }
