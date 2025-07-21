@@ -1,4 +1,6 @@
 #pragma once
+#include "app_config.hpp"
+
 #include <iostream>
 
-int encrypt(std::string password, std::string input);
+int encrypt(const std::string& password, AppConfig config);

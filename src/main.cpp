@@ -14,7 +14,8 @@ int main(int argc, char** argv)
 
     try {
         app.parse(argc, argv);
-        return encrypt("1234", config.input);
+        const std::string str = "1234";
+        return encrypt(str, config);
         
     } catch (const CLI::ParseError &e) {
         return app.exit(e);

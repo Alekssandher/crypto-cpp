@@ -31,7 +31,5 @@ std::vector<std::byte> getInputBytes(const std::string& i)
         throw std::runtime_error("Error reading file: " + i);
     }
 
-    file.close();
-
     return buffer;
 }
