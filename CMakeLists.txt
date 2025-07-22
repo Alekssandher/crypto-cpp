@@ -21,10 +21,34 @@ add_executable(
 add_subdirectory(external/CLI11)
 target_link_libraries(crypto-cpp PRIVATE CLI11::CLI11)
 
-
 # Sodium
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SODIUM REQUIRED libsodium)
-
-target_include_directories(crypto-cpp PRIVATE ${SODIUM_INCLUDE_DIRS})
-target_link_libraries(crypto-cpp PRIVATE ${SODIUM_LIBRARIES})
+if(WIN32 AND CMAKE_CROSSCOMPILING)
+    # cross-compilation on Windows
+    find_path(SODIUM_INCLUDE_DIR sodium.h
+        PATHS /usr/x86_64-w64-mingw32/include
+              /usr/local/x86_64-w64-mingw32/include
+    )
+    
+    find_library(SODIUM_LIBRARY
+        NAMES sodium libsodium
+        PATHS /usr/x86_64-w64-mingw32/lib
+              /usr/local/x86_64-w64-mingw32/lib
+    )
+    
+    if(SODIUM_INCLUDE_DIR AND SODIUM_LIBRARY)
+        target_include_directories(crypto-cpp PRIVATE ${SODIUM_INCLUDE_DIR})
+        target_link_libraries(crypto-cpp PRIVATE ${SODIUM_LIBRARY})
+        
+        
+        target_link_libraries(crypto-cpp PRIVATE ws2_32 advapi32)
+    else()
+        message(FATAL_ERROR "libsodium not found for cross-compilation")
+    endif()
+else()
+    # linux
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SODIUM REQUIRED libsodium)
+    
+    target_include_directories(crypto-cpp PRIVATE ${SODIUM_INCLUDE_DIRS})
+    target_link_libraries(crypto-cpp PRIVATE ${SODIUM_LIBRARIES})
+endif()
