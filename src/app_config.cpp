@@ -24,7 +24,7 @@ void AppConfig::configure(CLI::App &app)
     app.add_flag("--dof, --deleteOriginalFile", deleteOriginalFile,
         "Overwrite the original file to safely erase the original data from device.");
         
-    app.add_option("--dof-times", deleteOverwriteTimes,
+    app.add_option("--doft, --dof-times", deleteOverwriteTimes,
         "Number of times to overwrite the original file if deletion is enabled.")
         ->default_val(3)
         ->check(CLI::Range(1, 100))
