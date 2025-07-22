@@ -6,6 +6,8 @@
 
 # Build
 /build
+/build-linux
+/build-linux-static
 /build-win
 
 # Compiled Object files
