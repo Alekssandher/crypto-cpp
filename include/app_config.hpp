@@ -13,8 +13,10 @@ struct AppConfig {
     Operation operation;
 
     unsigned int iterations;
-    bool verbose;
-    bool deleteOriginalFile;
+    bool verbose = false;
+    bool deleteOriginalFile = false;
     int deleteOverwriteTimes;
     void configure(CLI::App &app);
+
+    static const std::map<std::string, Operation> operation_map;
 };

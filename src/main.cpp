@@ -8,6 +8,7 @@ int main(int argc, char** argv)
 {
     
     CLI::App app {"Crypto-Cpp APP"};
+    
     argv = app.ensure_utf8(argv);
 
     AppConfig config;

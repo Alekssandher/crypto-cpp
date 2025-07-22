@@ -19,11 +19,26 @@ string dec(const string &password, std::vector<std::byte> &data, AppConfig confi
 
 int decrypt(const string &password, AppConfig config)
 {
+
+    if (config.verbose) {
+        std::cout << "Starting decryption process...\n";
+        std::cout << "Reading input file: " << config.input << "\n";
+    }
+
     std::vector<std::byte> bytes = getInputBytes(config.input);
 
     try
     {
+        if (config.verbose) {
+            std::cout << "Deriving key from password...\n";
+        }
+
         string result = dec(password, bytes, config);
+
+        if (config.verbose) {
+            std::cout << "Saving decrypted content to: " << config.output << "\n";
+        }
+
         saveFile(result, config.output);
     }
     catch(const std::exception& e)
@@ -42,10 +57,18 @@ string dec(const string &password, std::vector<std::byte> &data, AppConfig confi
         throw std::runtime_error("Corrupted or Invalid data provided.");
     }
 
+    if (config.verbose) {
+        std::cout << "Extracting salt, IV, and ciphertext...\n";
+    }
+
     const byte* salt = reinterpret_cast<const byte*>(data.data());
     const byte* iv = reinterpret_cast<const byte*>(data.data() + 16);
     const byte* cipherText = reinterpret_cast<const byte *>(data.data() + 32);
     size_t cipherTextLen = data.size() - 32;
+
+    if (config.verbose) {
+        std::cout << "Deriving key with " << config.iterations << " iterations...\n";
+    }
 
     SecByteBlock key(32);
     PKCS5_PBKDF2_HMAC<SHA256> pbkdf;
@@ -55,6 +78,10 @@ string dec(const string &password, std::vector<std::byte> &data, AppConfig confi
         salt, 16,
         config.iterations
     );
+
+    if (config.verbose) {
+        std::cout << "Key derived. Initializing AES-GCM decryption...\n";
+    }
 
     GCM<AES>::Decryption dec;
     
@@ -74,5 +101,9 @@ string dec(const string &password, std::vector<std::byte> &data, AppConfig confi
         throw std::runtime_error(string("Fail while dec: ") + e.what());
     }
     
+    if (config.verbose) {
+        std::cout << "Data successfully decrypted.\n";
+    }
+
     return recovered;
 }
