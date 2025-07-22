@@ -2,111 +2,93 @@
 #include "get_input_bytes.hpp"
 #include "save_file.hpp"
 
-#include <bits/stdc++.h>
 #include <vector>
+#include <sodium.h>
 
-#include <cryptopp/secblock.h>
-#include <cryptopp/gcm.h>
-#include <cryptopp/osrng.h>
-#include <cryptopp/pwdbased.h>
-
-#include <aes.h>
 using std::string;
-using std::cout;
-using std::endl;
-using std::cerr;
-
-using std::ifstream;
 using std::vector;
 
-using namespace CryptoPP;
-
-string enc(const string& password, vector<std::byte> &data, AppConfig config);
+std::vector<std::byte> enc(const string& password, vector<std::byte> &data, AppConfig config);
 
 int encrypt(const string& password, AppConfig config)
 {
-    if (config.verbose) {
-        std::cout << "Starting encryption process...\n";
-        std::cout << "Reading input file: " << config.input << "\n";
-    }
-
     vector<std::byte> bytes = getInputBytes(config.input);
 
-    if (config.verbose) {
-        std::cout << "Deriving encryption key from password...\n";
-    }
-
-    std::string result = enc(password, bytes, config);
-
-    if (config.verbose) {
-        std::cout << "Saving encrypted data to: " << config.output << "\n";
-    }
+    std::vector<std::byte> result = enc(password, bytes, config);
 
     saveFile(result, config.output);
-
-    if (config.verbose) {
-        std::cout << "Encryption completed successfully.\n";
-    }
-
     return 0;
 }
 
-string enc(const string& password, vector<std::byte> &data, AppConfig config)
+std::vector<std::byte> enc(const string& password, vector<std::byte> &data, AppConfig config)
 {
-    if (config.verbose) {
-        std::cout << "Generating random IV (" << AES::BLOCKSIZE << " bytes)...\n";
-    }
-
-    // Generate IV
-    AutoSeededRandomPool prng;
-    byte iv[AES::BLOCKSIZE];
-    prng.GenerateBlock(iv, sizeof(iv));
+    const size_t SALT_LEN = crypto_pwhash_SALTBYTES;
+    const size_t KEY_LEN = crypto_aead_chacha20poly1305_ietf_KEYBYTES;
+    const size_t NONCE_LEN = crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
 
     if (config.verbose) {
-        std::cout << "Generating random salt (16 bytes)...\n";
+        std::cout << "Generating salt and nonce..." << std::endl;
     }
 
-    byte salt[16];
-    prng.GenerateBlock(salt, sizeof(salt));
+    unsigned char salt[SALT_LEN];
+    unsigned char nonce[NONCE_LEN];
+    randombytes_buf(salt, SALT_LEN);
+    randombytes_buf(nonce, NONCE_LEN);
+
+    unsigned char key[KEY_LEN];
+
+    if (crypto_pwhash(key, KEY_LEN,
+                      password.c_str(), password.length(),
+                      salt,
+                      config.getOpsLimit(),
+                      config.getMemLimit(),
+                      crypto_pwhash_ALG_DEFAULT) != 0) {
+        throw std::runtime_error("Key derivation failed (out of memory?).");
+    }
 
     if (config.verbose) {
-        std::cout << "Deriving key using PBKDF2 ("<< config.iterations << " iterations)...\n";
+        std::cout << "Encrypting data using ChaCha20-Poly1305..." << std::endl;
     }
-    // Derivate key
-    SecByteBlock key(32);
-    PKCS5_PBKDF2_HMAC<SHA256> pbkdf;
-    
 
-    pbkdf.DeriveKey(key, key.size(), 0,
-        reinterpret_cast<const byte*>(password.data()), password.size(),
-        salt, sizeof(salt), 
-        config.iterations 
+    size_t plain_len = data.size();
+    size_t cipher_len = plain_len + crypto_aead_chacha20poly1305_ietf_ABYTES;
+
+    vector<unsigned char> ciphertext(cipher_len);
+
+    crypto_aead_chacha20poly1305_ietf_encrypt(
+        ciphertext.data(),         
+        nullptr,                  
+        reinterpret_cast<unsigned char*>(data.data()), plain_len, 
+        nullptr, 0,                
+        nullptr,                   
+        nonce,                     
+        key                       
     );
 
     if (config.verbose) {
-        std::cout << "Encrypting data using AES-GCM...\n";
-    }
-    
-    GCM<AES>::Encryption enc;
-    enc.SetKeyWithIV(key, key.size(), iv, sizeof(iv));
-
-    string cipher;
-    StringSource ss(reinterpret_cast<const byte*>(data.data()), data.size(), true,
-        new AuthenticatedEncryptionFilter(enc, new StringSink(cipher)));
-    
-    if (config.verbose) {
-        std::cout << "Combining salt, IV, and ciphertext into final output...\n";
+        std::cout << "Combining salt + nonce + ciphertext for output..." << std::endl;
     }
 
-    // Appending for future dec
-    string output;
-    output.reserve(sizeof(salt) + sizeof(iv) + cipher.size());
-    output.append(reinterpret_cast<char*>(salt), sizeof(salt));
-    output.append(reinterpret_cast<char*>(iv), sizeof(iv));
-    output.append(cipher);
+    std::vector<std::byte> output;
+    output.reserve(SALT_LEN + NONCE_LEN + cipher_len);
+
+    // Append salt
+    output.insert(output.end(),
+                reinterpret_cast<std::byte*>(salt),
+                reinterpret_cast<std::byte*>(salt + SALT_LEN));
+
+    // Append nonce
+    output.insert(output.end(),
+                reinterpret_cast<std::byte*>(nonce),
+                reinterpret_cast<std::byte*>(nonce + NONCE_LEN));
+
+    // Append ciphertext
+    output.insert(output.end(),
+                reinterpret_cast<std::byte*>(ciphertext.data()),
+                reinterpret_cast<std::byte*>(ciphertext.data() + cipher_len));
 
     if (config.verbose) {
-        std::cout << "Encrypted data ready.\n";
+        std::cout << "Encryption complete. Output length: " << output.size() << " bytes\n";
     }
 
     return output;

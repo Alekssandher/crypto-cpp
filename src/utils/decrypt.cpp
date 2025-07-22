@@ -2,108 +2,67 @@
 #include "get_input_bytes.hpp"
 #include "save_file.hpp"
 
-#include <cryptopp/secblock.h>
-#include <cryptopp/gcm.h>
-#include <cryptopp/osrng.h>
-#include <cryptopp/pwdbased.h>
-
-#include <bits/stdc++.h>
-
-#include <aes.h>
+#include <sodium.h>
 
 using std::string;
 
-using namespace CryptoPP;
+std::vector<std::byte> dec(const std::string& password, const std::vector<std::byte>& input, AppConfig config);
 
-string dec(const string &password, std::vector<std::byte> &data, AppConfig config);
-
-int decrypt(const string &password, AppConfig config)
+int decrypt(const std::string& password, AppConfig config)
 {
-
-    if (config.verbose) {
-        std::cout << "Starting decryption process...\n";
-        std::cout << "Reading input file: " << config.input << "\n";
-    }
-
-    std::vector<std::byte> bytes = getInputBytes(config.input);
-
-    try
-    {
-        if (config.verbose) {
-            std::cout << "Deriving key from password...\n";
-        }
-
-        string result = dec(password, bytes, config);
-
-        if (config.verbose) {
-            std::cout << "Saving decrypted content to: " << config.output << "\n";
-        }
-
-        saveFile(result, config.output);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
-    }
-    
+    std::vector<std::byte> input = getInputBytes(config.input);
+    std::vector<std::byte> plaintext = dec(password, input, config);
+    saveFile(plaintext, config.output);
     return 0;
 }
 
-string dec(const string &password, std::vector<std::byte> &data, AppConfig config)
+
+std::vector<std::byte> dec(const std::string& password, const std::vector<std::byte>& input, AppConfig config)
 {
-    if(data.size() < 32)
-    {
-        throw std::runtime_error("Corrupted or Invalid data provided.");
+    const size_t SALT_LEN = crypto_pwhash_SALTBYTES;
+    const size_t NONCE_LEN = crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
+    const size_t KEY_LEN = crypto_aead_chacha20poly1305_ietf_KEYBYTES;
+
+    if (input.size() < SALT_LEN + NONCE_LEN + crypto_aead_chacha20poly1305_ietf_ABYTES) {
+        throw std::runtime_error("Input data is too short or corrupted.");
     }
 
     if (config.verbose) {
-        std::cout << "Extracting salt, IV, and ciphertext...\n";
+        std::cout << "Extracting salt, nonce and ciphertext..." << std::endl;
     }
 
-    const byte* salt = reinterpret_cast<const byte*>(data.data());
-    const byte* iv = reinterpret_cast<const byte*>(data.data() + 16);
-    const byte* cipherText = reinterpret_cast<const byte *>(data.data() + 32);
-    size_t cipherTextLen = data.size() - 32;
+    const unsigned char* salt = reinterpret_cast<const unsigned char*>(input.data());
+    const unsigned char* nonce = reinterpret_cast<const unsigned char*>(input.data() + SALT_LEN);
+    const unsigned char* ciphertext = reinterpret_cast<const unsigned char*>(input.data() + SALT_LEN + NONCE_LEN);
+    const size_t ciphertext_len = input.size() - SALT_LEN - NONCE_LEN;
+
+    unsigned char key[KEY_LEN];
+    if (crypto_pwhash(key, KEY_LEN,
+                      password.c_str(), password.length(),
+                      salt,
+                      config.getOpsLimit(),
+                      config.getMemLimit(),
+                      crypto_pwhash_ALG_DEFAULT) != 0) {
+        throw std::runtime_error("Key derivation failed.");
+    }
+
+    std::vector<std::byte> decrypted(ciphertext_len); 
+    unsigned long long decrypted_len;
 
     if (config.verbose) {
-        std::cout << "Deriving key with " << config.iterations << " iterations...\n";
+        std::cout << "Decrypting data..." << std::endl;
     }
 
-    SecByteBlock key(32);
-    PKCS5_PBKDF2_HMAC<SHA256> pbkdf;
-
-    pbkdf.DeriveKey(key, key.size(), 0,
-        reinterpret_cast<const byte*>(password.data()), password.size(),
-        salt, 16,
-        config.iterations
-    );
-
-    if (config.verbose) {
-        std::cout << "Key derived. Initializing AES-GCM decryption...\n";
+    if (crypto_aead_chacha20poly1305_ietf_decrypt(
+            reinterpret_cast<unsigned char*>(decrypted.data()), &decrypted_len,
+            nullptr, 
+            ciphertext, ciphertext_len,
+            nullptr, 0,
+            nonce,
+            key) != 0) {
+        throw std::runtime_error("Decryption failed. Possibly wrong password or corrupted file.");
     }
 
-    GCM<AES>::Decryption dec;
-    
-    dec.SetKeyWithIV(key, key.size(), iv, AES::BLOCKSIZE);
-
-    string recovered;
-    try
-    {
-        StringSource ss(cipherText, cipherTextLen, true,
-            new AuthenticatedDecryptionFilter(dec,
-                new StringSink(recovered)
-            )
-        );
-    }
-    catch(const std::exception& e)
-    {
-        throw std::runtime_error(string("Fail while dec: ") + e.what());
-    }
-    
-    if (config.verbose) {
-        std::cout << "Data successfully decrypted.\n";
-    }
-
-    return recovered;
+    decrypted.resize(decrypted_len); 
+    return decrypted;
 }

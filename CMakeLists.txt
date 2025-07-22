@@ -21,12 +21,10 @@ add_executable(
 add_subdirectory(external/CLI11)
 target_link_libraries(crypto-cpp PRIVATE CLI11::CLI11)
 
-# Crypto++ CMake Wrapper
-add_subdirectory(external/cryptopp-cmake)
 
-set(CRYPTOPP_SOURCES "${CMAKE_SOURCE_DIR}/external/cryptopp")
+# Sodium
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SODIUM REQUIRED libsodium)
 
-set_property(DIRECTORY external/cryptopp-cmake PROPERTY
-    CRYPTOPP_SOURCES ${CRYPTOPP_SOURCES})
-
-target_link_libraries(crypto-cpp PRIVATE cryptopp)
+target_include_directories(crypto-cpp PRIVATE ${SODIUM_INCLUDE_DIRS})
+target_link_libraries(crypto-cpp PRIVATE ${SODIUM_LIBRARIES})

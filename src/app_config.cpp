@@ -17,7 +17,7 @@ void AppConfig::configure(CLI::App &app)
 
     app.add_option("--op, --operation", operation, "Kind of operation (encrypt or decrypt)")->required()->transform(CLI::CheckedTransformer(operation_map, CLI::ignore_case));    
 
-    app.add_option("--itr, --iterations", iterations, "Number of iterations.")->expected(0, 2000000)->default_val(500000);
+    app.add_option("--sl, --security-level", security_level_int, "Security level (1=Low, 2=Moderate, 3=Sensitive)")->check(CLI::Range(1, 3))->default_val(2);
 
     app.add_flag("-v, --verbose", verbose, "Show more information on the terminal")->ignore_case();
 

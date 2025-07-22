@@ -2,5 +2,6 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
 
-void saveFile(const std::string& str, std::string out);
+void saveFile(const std::vector<std::byte>& data, const std::string& out);

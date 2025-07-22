@@ -3,9 +3,14 @@
 #include "app_config.hpp"
 #include "encrypt.hpp"
 #include "handle_args.hpp"
+#include "sodium.h"
 
 int main(int argc, char** argv)
 {
+    if (sodium_init() == -1) {
+        std::cerr << "libsodium failed to initialize.\n";
+        return 1;
+    }
     
     CLI::App app {"Crypto-Cpp APP"};
     
