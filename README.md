@@ -2,6 +2,9 @@
 
 A secure file encryption and decryption tool built with C++ and libsodium, developed as a CS50 final project.
 
+## Showcase
+[![Watch the video](https://img.youtube.com/vi/QxDbdNdGEbc/hqdefault.jpg)](https://youtu.be/QxDbdNdGEbc)
+
 ## Overview
 
 crypto-cpp is a command-line application that provides secure file encryption and decryption using modern cryptographic algorithms. It uses ChaCha20-Poly1305 for authenticated encryption and Argon2 for key derivation, ensuring both confidentiality and integrity of your files.
@@ -61,7 +64,7 @@ sudo apt install mingw-w64 mingw-w64-tools
 
 #### Linux (Dynamic Linking)
 ```bash
-git clone <repository-url>
+git clone https://github.com/Alekssandher/crypto-cpp/
 cd crypto-cpp
 git submodule update --init --recursive
 ./scripts/build-linux.sh
