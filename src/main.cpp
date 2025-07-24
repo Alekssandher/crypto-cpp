@@ -1,7 +1,6 @@
 #include <iostream>
 #include <CLI/CLI.hpp>
 #include "app_config.hpp"
-#include "encrypt.hpp"
 #include "handle_args.hpp"
 #include "sodium.h"
 
@@ -12,7 +11,7 @@ int main(int argc, char** argv)
         return 1;
     }
     
-    CLI::App app {"Crypto-Cpp APP"};
+    CLI::App app {"crypto-cpp APP"};
     
     argv = app.ensure_utf8(argv);
 
